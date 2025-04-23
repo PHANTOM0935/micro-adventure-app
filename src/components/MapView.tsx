@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Camera } from "lucide-react";
@@ -28,6 +27,7 @@ const MapView: React.FC<MapViewProps> = ({
 }) => {
   const [treasures, setTreasures] = useState<Treasure[]>([]);
   const [nearbyTreasure, setNearbyTreasure] = useState(false);
+  const [selectedTreasure, setSelectedTreasure] = useState<Treasure | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -73,6 +73,22 @@ const MapView: React.FC<MapViewProps> = ({
     };
   };
 
+  const calculatePath = (treasure: Treasure) => {
+    if (!currentLocation) return [];
+    
+    const points = 5;
+    const path = [];
+    
+    for (let i = 0; i <= points; i++) {
+      const fraction = i / points;
+      const lat = currentLocation.latitude + (treasure.latitude - currentLocation.latitude) * fraction;
+      const lng = currentLocation.longitude + (treasure.longitude - currentLocation.longitude) * fraction;
+      path.push({ lat, lng });
+    }
+    
+    return path;
+  };
+
   const renderMap = () => {
     if (!currentLocation) return null;
 
@@ -92,29 +108,61 @@ const MapView: React.FC<MapViewProps> = ({
         />
         
         <div 
-          className="absolute w-6 h-6 rounded-full bg-treasure-accent z-10"
+          className="absolute w-12 h-12 z-10"
           style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
         >
-          <div className="absolute inset-0 bg-treasure-accent rounded-full animate-pulse-ring"></div>
-          <div className="absolute inset-1 bg-white rounded-full"></div>
+          <div className="absolute inset-0 bg-treasure-accent/20 rounded-full animate-pulse"></div>
+          <div className="relative w-full h-full">
+            <div className="absolute inset-0 bg-white rounded-full flex items-center justify-center overflow-hidden border-4 border-treasure-accent">
+              <span className="text-2xl">🧙‍♂️</span>
+            </div>
+          </div>
         </div>
         
         {treasures.map(treasure => {
           const position = calculatePosition(treasure.latitude, treasure.longitude);
+          const isSelected = selectedTreasure?.id === treasure.id;
+          
           return (
-            <div 
-              key={treasure.id}
-              className={`absolute w-8 h-8 rounded-full flex items-center justify-center
-                ${treasure.type === 'treasure' ? 'bg-treasure-DEFAULT' : 'bg-destructive'} 
-                transform -translate-x-1/2 -translate-y-1/2 shadow-lg animate-float`}
-              style={position}
-            >
-              {treasure.type === 'treasure' ? (
-                <div className="w-5 h-5 text-white">🗝️</div>
-              ) : (
-                <div className="w-5 h-5 text-white">⚠️</div>
+            <React.Fragment key={treasure.id}>
+              {isSelected && (
+                <>
+                  {calculatePath(treasure).map((point, index) => {
+                    const pointPos = calculatePosition(point.lat, point.lng);
+                    return (
+                      <div
+                        key={`path-${index}`}
+                        className="absolute w-2 h-2 bg-treasure-accent rounded-full animate-pulse"
+                        style={{
+                          ...pointPos,
+                          transform: 'translate(-50%, -50%)',
+                          opacity: 0.6,
+                        }}
+                      />
+                    );
+                  })}
+                </>
               )}
-            </div>
+              
+              <div 
+                onClick={() => setSelectedTreasure(isSelected ? null : treasure)}
+                className={`absolute w-10 h-10 rounded-full flex items-center justify-center
+                  ${treasure.type === 'treasure' ? 'bg-treasure-DEFAULT hover:bg-treasure-secondary' : 'bg-destructive hover:bg-destructive/80'} 
+                  transform -translate-x-1/2 -translate-y-1/2 shadow-lg cursor-pointer
+                  ${isSelected ? 'ring-4 ring-treasure-accent animate-bounce' : 'animate-float'}`}
+                style={position}
+              >
+                {treasure.type === 'treasure' ? (
+                  <div className="w-6 h-6 text-white flex items-center justify-center">
+                    🗝️
+                  </div>
+                ) : (
+                  <div className="w-6 h-6 text-white flex items-center justify-center">
+                    ⚠️
+                  </div>
+                )}
+              </div>
+            </React.Fragment>
           );
         })}
 
