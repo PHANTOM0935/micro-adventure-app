@@ -1,8 +1,8 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Camera, Navigation, MapPin, Map, Compass } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 interface Treasure {
   id: string;
@@ -34,12 +34,25 @@ const MapView: React.FC<MapViewProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [watchId, setWatchId] = useState<number | null>(null);
   const [nearbyTreasure, setNearbyTreasure] = useState(false);
+  const [locationName, setLocationName] = useState<string>("");
   const mapRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Initialize geolocation and generate nearby treasures
+  const fetchLocationName = async (latitude: number, longitude: number) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
+      );
+      const data = await response.json();
+      const place = data.display_name.split(',').slice(0, 2).join(',');
+      setLocationName(place);
+    } catch (error) {
+      console.error('Error fetching location name:', error);
+      setLocationName("Unknown Location");
+    }
+  };
+
   useEffect(() => {
-    // Request permission for geolocation
     const initGeolocation = () => {
       if (!navigator.geolocation) {
         toast({
@@ -50,15 +63,14 @@ const MapView: React.FC<MapViewProps> = ({
         return;
       }
 
-      // Get current position
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           setCurrentLocation({ latitude, longitude });
+          fetchLocationName(latitude, longitude);
           generateTreasures(latitude, longitude);
           setIsLoading(false);
           
-          // Start watching position
           const id = navigator.geolocation.watchPosition(
             (position) => {
               const newLocation = {
@@ -66,6 +78,7 @@ const MapView: React.FC<MapViewProps> = ({
                 longitude: position.coords.longitude
               };
               setCurrentLocation(newLocation);
+              fetchLocationName(newLocation.latitude, newLocation.longitude);
               checkNearbyTreasures(newLocation);
             },
             (error) => {
@@ -89,7 +102,6 @@ const MapView: React.FC<MapViewProps> = ({
 
     initGeolocation();
 
-    // Cleanup
     return () => {
       if (watchId !== null) {
         navigator.geolocation.clearWatch(watchId);
@@ -97,13 +109,10 @@ const MapView: React.FC<MapViewProps> = ({
     };
   }, [toast, setCurrentLocation]);
 
-  // Generate random treasures around the current location
   const generateTreasures = (latitude: number, longitude: number) => {
     const newTreasures: Treasure[] = [];
     
-    // Generate 5 random treasures
     for (let i = 0; i < 5; i++) {
-      // Random offset in degrees (roughly within 100-500m)
       const latOffset = (Math.random() * 0.008 - 0.004);
       const lngOffset = (Math.random() * 0.008 - 0.004);
       
@@ -120,9 +129,8 @@ const MapView: React.FC<MapViewProps> = ({
     setTreasures(newTreasures);
   };
 
-  // Check if there are treasures nearby (within ~50m)
   const checkNearbyTreasures = (location: { latitude: number, longitude: number }) => {
-    const threshold = 0.0005; // Roughly 50m
+    const threshold = 0.0005;
     const nearby = treasures.some(treasure => {
       const latDiff = Math.abs(treasure.latitude - location.latitude);
       const lngDiff = Math.abs(treasure.longitude - location.longitude);
@@ -140,25 +148,21 @@ const MapView: React.FC<MapViewProps> = ({
     setNearbyTreasure(nearby);
   };
 
-  // Simulate a map using CSS and positions
   const renderMap = () => {
     if (!currentLocation) return null;
 
-    // Calculate positions based on real coordinates
     const calculatePosition = (lat: number, lng: number) => {
       if (!mapRef.current) return { top: '50%', left: '50%' };
       
       const mapWidth = mapRef.current.clientWidth;
       const mapHeight = mapRef.current.clientHeight;
       
-      // Simple offset calculation (this would use proper projection in a real app)
       const latDiff = lat - currentLocation.latitude;
       const lngDiff = lng - currentLocation.longitude;
       
-      // Convert to pixels (scaled to fit the view)
-      const scale = 50000; // Adjust based on zoom level
+      const scale = 50000;
       const x = mapWidth / 2 + lngDiff * scale;
-      const y = mapHeight / 2 - latDiff * scale; // Negative because lat increases northward
+      const y = mapHeight / 2 - latDiff * scale;
       
       return {
         top: `${y}px`, 
@@ -167,15 +171,29 @@ const MapView: React.FC<MapViewProps> = ({
     };
 
     return (
-      <div ref={mapRef} className="relative bg-treasure-dark/80 w-full h-full overflow-hidden">
-        {/* Map grid lines */}
-        <div className="absolute inset-0 grid grid-cols-4 grid-rows-4">
-          {Array.from({ length: 16 }).map((_, i) => (
-            <div key={i} className="border border-treasure-accent/10"></div>
-          ))}
+      <div ref={mapRef} className="relative w-full h-full">
+        <div className="absolute inset-0 bg-gradient-to-b from-treasure-dark/95 to-treasure-dark">
+          <div className="absolute inset-0 grid grid-cols-4 grid-rows-4">
+            {Array.from({ length: 16 }).map((_, i) => (
+              <div key={i} className="border border-treasure-accent/10"></div>
+            ))}
+          </div>
+        </div>
+
+        <div className="absolute top-20 left-4 right-4 z-10">
+          <Badge variant="treasure" className="text-sm px-4 py-2 mb-2">
+            Current Location
+          </Badge>
+          <h2 className="text-white text-xl font-semibold mb-1 truncate">
+            {locationName || "Locating..."}
+          </h2>
+          {currentLocation && (
+            <p className="text-white/70 text-sm">
+              {currentLocation.latitude.toFixed(6)}, {currentLocation.longitude.toFixed(6)}
+            </p>
+          )}
         </div>
         
-        {/* Current location marker */}
         <div 
           className="absolute w-6 h-6 rounded-full bg-treasure-accent z-10"
           style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
@@ -184,7 +202,6 @@ const MapView: React.FC<MapViewProps> = ({
           <div className="absolute inset-1 bg-white rounded-full"></div>
         </div>
         
-        {/* Treasure markers */}
         {treasures.map(treasure => {
           const position = calculatePosition(treasure.latitude, treasure.longitude);
           return (
@@ -204,7 +221,6 @@ const MapView: React.FC<MapViewProps> = ({
           );
         })}
 
-        {/* Decoration elements */}
         <div className="absolute top-16 left-16 w-24 h-24 rounded-full border-2 border-treasure-accent/20 animate-spin-slow"></div>
         <div className="absolute bottom-24 right-32 w-16 h-16 rounded-full border border-treasure-secondary/30 animate-spin-slow"></div>
       </div>
@@ -213,8 +229,7 @@ const MapView: React.FC<MapViewProps> = ({
 
   return (
     <div className="relative w-full h-full">
-      {/* Map container */}
-      <div className="absolute inset-0 bg-treasure-dark">
+      <div className="absolute inset-0">
         {isLoading ? (
           <div className="flex h-full items-center justify-center">
             <div className="text-center">
@@ -228,7 +243,6 @@ const MapView: React.FC<MapViewProps> = ({
         )}
       </div>
 
-      {/* UI Controls */}
       <div className="absolute top-4 right-4 flex flex-col gap-2">
         <Button 
           variant="secondary" 
@@ -237,6 +251,7 @@ const MapView: React.FC<MapViewProps> = ({
           onClick={() => {
             if (currentLocation) {
               setCurrentLocation({...currentLocation});
+              fetchLocationName(currentLocation.latitude, currentLocation.longitude);
               toast({
                 title: "Location Updated",
                 description: "Map has been centered to your current location",
@@ -256,7 +271,6 @@ const MapView: React.FC<MapViewProps> = ({
         </Button>
       </div>
 
-      {/* AR Button - Only show when treasure is nearby */}
       <div className="absolute bottom-8 left-0 right-0 px-4 flex justify-center">
         <Button 
           className={`${nearbyTreasure ? 'bg-treasure-DEFAULT hover:bg-treasure-secondary' : 'bg-gray-400'} text-white font-bold py-4 px-8 rounded-full shadow-lg flex items-center justify-center transition-all w-full max-w-md`}
@@ -268,7 +282,6 @@ const MapView: React.FC<MapViewProps> = ({
         </Button>
       </div>
 
-      {/* Compass */}
       <div className="absolute top-4 left-4">
         <div className="bg-black/30 p-2 rounded-full backdrop-blur-md">
           <Compass className="h-6 w-6 text-white" />
