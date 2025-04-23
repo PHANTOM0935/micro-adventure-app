@@ -13,16 +13,16 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 261 80% 74%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 267 29% 54%;
+    --secondary-foreground: 210 40% 98%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
+    --accent: 93 84% 94%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
@@ -30,47 +30,48 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 261 80% 74%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Custom theme colors */
+    --app-primary: 261 80% 74%; /* Primary Purple: #9b87f5 */
+    --app-secondary: 267 29% 54%; /* Secondary Purple: #7E69AB */
+    --app-accent: 195 73% 49%; /* Bright Blue: #1EAEDB */
+    --app-success: 93 84% 94%; /* Soft Green: #F2FCE2 */
+    --app-neutral: 214 5% 58%; /* Neutral Gray: #8E9196 */
+    --app-dark: 222 26% 14%; /* Dark Purple: #1A1F2C */
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 222 26% 14%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 222 26% 18%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 222 26% 14%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
+    --primary: 261 80% 74%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 267 29% 54%;
     --secondary-foreground: 210 40% 98%;
 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 195 73% 49%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
@@ -78,7 +79,8 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 261 80% 74%;
+    
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -97,5 +99,47 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Poppins', sans-serif;
   }
+}
+
+@layer components {
+  .treasure-pulse {
+    @apply relative;
+  }
+  
+  .treasure-pulse::after {
+    content: '';
+    @apply absolute inset-0 rounded-full bg-primary/30 animate-ping;
+  }
+  
+  .map-container {
+    @apply w-full h-full absolute inset-0;
+  }
+  
+  .ar-overlay {
+    @apply fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/70 text-white;
+  }
+  
+  .camera-view {
+    @apply w-full h-full object-cover;
+  }
+  
+  .treasure-marker {
+    @apply w-10 h-10 bg-primary rounded-full flex items-center justify-center shadow-lg;
+  }
+  
+  .obstacle-marker {
+    @apply w-10 h-10 bg-destructive rounded-full flex items-center justify-center shadow-lg;
+  }
+  
+  .btn-floating {
+    @apply fixed z-10 rounded-full shadow-lg flex items-center justify-center;
+  }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
 }

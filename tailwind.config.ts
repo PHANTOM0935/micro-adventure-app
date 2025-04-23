@@ -61,7 +61,16 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+                // Theme specific colors
+                treasure: {
+                    DEFAULT: '#9b87f5', // Primary purple
+                    secondary: '#7E69AB',  // Secondary purple
+                    accent: '#1EAEDB',     // Bright blue
+                    success: '#F2FCE2',    // Soft green
+                    neutral: '#8E9196',    // Neutral gray
+                    dark: '#1A1F2C'        // Dark purple
+                }
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -84,11 +93,26 @@ export default {
 					to: {
 						height: '0'
 					}
-				}
+				},
+                'float': {
+                    '0%, 100%': { transform: 'translateY(0)' },
+                    '50%': { transform: 'translateY(-10px)' }
+                },
+                'pulse-ring': {
+                    '0%': { transform: 'scale(0.8)', opacity: '1' },
+                    '100%': { transform: 'scale(2)', opacity: '0' }
+                },
+                'spin-slow': {
+                    '0%': { transform: 'rotate(0deg)' },
+                    '100%': { transform: 'rotate(360deg)' }
+                }
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+                'float': 'float 3s ease-in-out infinite',
+                'pulse-ring': 'pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite',
+                'spin-slow': 'spin-slow 3s linear infinite'
 			}
 		}
 	},
